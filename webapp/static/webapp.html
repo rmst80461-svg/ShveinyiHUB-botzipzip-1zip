@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Оформить заказ - Швейная мастерская</title>
+    <!-- ✅ Исправлен: убраны лишние пробелы -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #333333);
+            padding: 20px;
+            min-height: 100vh;
+            padding-bottom: env(safe-area-inset-bottom, 20px); /* Для iPhone */
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 22px;
+            font-weight: 600;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            font-size: 15px;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid var(--tg-theme-hint-color, #d0d0d0);
+            border-radius: 12px;
+            font-size: 16px;
+            background: var(--tg-theme-secondary-bg-color, #f9f9f9);
+            color: var(--tg-theme-text-color, #333);
+            font-family: inherit;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--tg-theme-button-color, #5d7af7);
+        }
+        input.error, textarea.error {
+            border-color: #e74c3c;
+            background-color: #fff8f8;
+        }
+        textarea {
+            height: 100px;
+            resize: vertical;
+        }
+        .services {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .service-btn {
+            padding: 15px 10px;
+            border: 2px solid var(--tg-theme-hint-color, #d0d0d0);
+            border-radius: 12px;
+            background: var(--tg-theme-secondary-bg-color, #f9f9f9);
+            cursor: pointer;
+            text-align: center;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+        .service-btn:hover, .service-btn.selected {
+            border-color: var(--tg-theme-button-color, #5d7af7);
+            background: var(--tg-theme-button-color, #5d7af7);
+            color: var(--tg-theme-button-text-color, #ffffff);
+        }
+        .info-box {
+            background: var(--tg-theme-secondary-bg-color, #f0f0f0);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        .info-box p {
+            margin: 5px 0;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>✂️ Оформить заказ</h1>
+
+    <div class="info-box">
+        <p>📍 г. Москва, ул. Маршала Федоренко, д. 12</p>
+        <p>📞 +7 (968) 396-91-52</p>
+    </div>
+
+    <form id="orderForm">
+        <div class="form-group">
+            <label for="service">Выберите услугу:</label>
+            <div class="services" role="radiogroup" aria-labelledby="service-label">
+                <div class="service-btn" data-service="tricot" role="radio" tabindex="0">🧵 Трикотаж</div>
+                <div class="service-btn" data-service="leather" role="radio" tabindex="0">🎒 Кожа</div>
+                <div class="service-btn" data-service="fur" role="radio" tabindex="0">🐾 Мех</div>
+                <div class="service-btn" data-service="outerwear" role="radio" tabindex="0">🧥 Верхняя одежда</div>
+                <div class="service-btn" data-service="fitting" role="radio" tabindex="0">📏 Подгонка</div>
+                <div class="service-btn" data-service="small" role="radio" tabindex="0">🔘 Мелкий ремонт</div>
+            </div>
+            <input type="hidden" id="service" name="service" required>
+        </div>
+
+        <div class="form-group">
+            <label for="name">Ваше имя:</label>
+            <input type="text" id="name" name="name" placeholder="Как к вам обращаться?" required maxlength="50">
+        </div>
+
+        <div class="form-group">
+            <label for="phone">Телефон:</label>
+            <input type="tel" id="phone" name="phone" placeholder="+7 (999) 123-45-67" required maxlength="18">
+        </div>
+
+        <div class="form-group">
+            <label for="description">Опишите работу:</label>
+            <textarea id="description" name="description" placeholder="Расскажите подробнее: что за вещь, из какого материала, что нужно починить или изменить..."></textarea>
+        </div>
+    </form>
+
+    <script>
+        // Проверка: запущено ли в Telegram?
+        if (typeof window.Telegram !== 'object' || typeof window.Telegram.WebApp !== 'object') {
+            console.error('This app must be run inside Telegram!');
+            document.body.innerHTML = '<h2>❌ Откройте эту страницу внутри Telegram!</h2>';
+            throw new Error('Not in Telegram WebApp');
+        }
+
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
+        tg.MainButton.hide();
+
+        let selectedService = null;
+
+        // Обработчики выбора услуги
+        document.querySelectorAll('.service-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.service-btn').forEach(b => {
+                    b.classList.remove('selected');
+                    b.setAttribute('aria-checked', 'false');
+                });
+                btn.classList.add('selected');
+                btn.setAttribute('aria-checked', 'true');
+                selectedService = btn.dataset.service;
+                document.getElementById('service').value = selectedService;
+                validateAndToggleButton();
+            });
+
+            // Поддержка клавиатуры (Enter/Space)
+            btn.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    btn.click();
+                }
+            });
+        });
+
+        // Валидация телефона (простая)
+        function isValidPhone(phone) {
+            const cleaned = phone.replace(/\D/g, '');
+            return cleaned.length >= 10 && cleaned.length <= 15;
+        }
+
+        // Валидация и управление кнопкой
+        function validateAndToggleButton() {
+            const nameInput = document.getElementById('name');
+            const phoneInput = document.getElementById('phone');
+            const name = nameInput.value.trim();
+            const phone = phoneInput.value.trim();
+
+            // Сброс ошибок
+            nameInput.classList.remove('error');
+            phoneInput.classList.remove('error');
+
+            let valid = true;
+
+            if (!selectedService) valid = false;
+            if (!name) {
+                nameInput.classList.add('error');
+                valid = false;
+            }
+            if (!phone || !isValidPhone(phone)) {
+                phoneInput.classList.add('error');
+                valid = false;
+            }
+
+            if (valid) {
+                tg.MainButton.setText('✅ Отправить заказ');
+                tg.MainButton.show();
+            } else {
+                tg.MainButton.hide();
+            }
+        }
+
+        // Слушатели
+        document.getElementById('name').addEventListener('input', validateAndToggleButton);
+        document.getElementById('phone').addEventListener('input', validateAndToggleButton);
+
+        // Отправка данных
+        tg.MainButton.onClick(() => {
+            const data = {
+                service: selectedService,
+                name: document.getElementById('name').value.trim(),
+                phone: document.getElementById('phone').value.trim(),
+                description: document.getElementById('description').value.trim()
+            };
+
+            console.log('Sending order data:', data);
+            tg.sendData(JSON.stringify(data));
+        });
+
+        // Поддержка темы Telegram
+        tg.onEvent('themeChanged', () => {
+            // CSS уже использует переменные темы — этого достаточно
+        });
+    </script>
+</body>
+</html>

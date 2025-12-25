@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Журнал спама - Швейная мастерская{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>🛑 Журнал спам-атак ({{ spam_logs|length }})</h2>
+    
+    {% if spam_logs %}
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>User ID</th>
+                <th>Сообщение</th>
+                <th>Причина</th>
+                <th>Дата</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in spam_logs %}
+            <tr>
+                <td>{{ log.id }}</td>
+                <td>{{ log.user_id }}</td>
+                <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis;">{{ log.message[:100] }}{% if log.message|length > 100 %}...{% endif %}</td>
+                <td><span class="status status-cancelled">{{ log.reason }}</span></td>
+                <td>{{ log.created_at.strftime('%d.%m.%Y %H:%M') if log.created_at else '-' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="padding: 20px; text-align: center; color: #888;">🎉 Спам-атак не зафиксировано!</p>
+    {% endif %}
+</div>
+{% endblock %}

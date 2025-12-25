@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Arial, sans-serif; 
+            width: 420px; 
+            padding: 20px; 
+            background: #f5f5f5; 
+        }
+        .receipt { 
+            background: white; 
+            border-radius: 16px; 
+            padding: 24px; 
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12); 
+            border-top: 8px solid #2E7D32; 
+        }
+        .header { 
+            text-align: center; 
+            margin-bottom: 20px; 
+        }
+        .logo { 
+            font-size: 28px; 
+            font-weight: bold; 
+            color: #2E7D32; 
+            margin-bottom: 4px; 
+        }
+        .title { 
+            font-size: 16px; 
+            color: #666; 
+            text-transform: uppercase; 
+            letter-spacing: 1px; 
+        }
+        .order-number { 
+            background: #E8F5E9; 
+            padding: 12px; 
+            border-radius: 10px; 
+            text-align: center; 
+            margin: 16px 0; 
+        }
+        .order-number .num { 
+            font-size: 32px; 
+            font-weight: bold; 
+            color: #2E7D32; 
+        }
+        .order-number .date { 
+            color: #666; 
+            font-size: 14px; 
+        }
+        .divider { 
+            border-top: 2px dashed #ddd; 
+            margin: 16px 0; 
+        }
+        .section-title { 
+            color: #2E7D32; 
+            font-size: 13px; 
+            font-weight: bold; 
+            text-transform: uppercase; 
+            margin-bottom: 10px; 
+        }
+        .row { 
+            display: flex; 
+            justify-content: space-between; 
+            margin-bottom: 8px; 
+            align-items: flex-start;
+        }
+        .label { 
+            color: #888; 
+            font-size: 14px; 
+        }
+        .value { 
+            font-weight: 600; 
+            color: #222; 
+            font-size: 14px; 
+            text-align: right;
+            max-width: 60%;
+        }
+        .service-box { 
+            background: #FFFDE7; 
+            padding: 14px; 
+            border-radius: 10px; 
+            border-left: 4px solid #FFC107; 
+            margin: 12px 0; 
+        }
+        .service-name { 
+            font-weight: bold; 
+            font-size: 16px; 
+            color: #333; 
+        }
+        .price-box { 
+            background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%); 
+            padding: 16px; 
+            border-radius: 12px; 
+            margin: 16px 0; 
+            text-align: center; 
+        }
+        .price-label { 
+            color: #666; 
+            font-size: 12px; 
+            text-transform: uppercase; 
+        }
+        .price-value { 
+            font-size: 28px; 
+            font-weight: bold; 
+            color: #2E7D32; 
+        }
+        .info-box { 
+            background: #E3F2FD; 
+            padding: 14px; 
+            border-radius: 10px; 
+            margin: 12px 0; 
+        }
+        .info-box .icon { 
+            font-size: 18px; 
+            margin-right: 8px; 
+        }
+        .info-box .text { 
+            color: #1565C0; 
+            font-size: 14px; 
+        }
+        .footer { 
+            text-align: center; 
+            margin-top: 20px; 
+            padding-top: 16px; 
+            border-top: 1px solid #eee; 
+        }
+        .footer-address { 
+            color: #666; 
+            font-size: 13px; 
+            margin-bottom: 8px; 
+        }
+        .footer-phone { 
+            color: #2E7D32; 
+            font-weight: bold; 
+            font-size: 16px; 
+        }
+        .footer-hours { 
+            color: #888; 
+            font-size: 12px; 
+            margin-top: 6px; 
+        }
+        .footer-note { 
+            color: #999; 
+            font-size: 11px; 
+            margin-top: 12px; 
+            font-style: italic; 
+        }
+        .qr-section { 
+            text-align: center; 
+            margin: 16px 0; 
+        }
+        .qr-section img { 
+            width: 80px; 
+            height: 80px; 
+        }
+        .qr-text { 
+            color: #888; 
+            font-size: 11px; 
+            margin-top: 4px; 
+        }
+    </style>
+</head>
+<body>
+    <div class="receipt">
+        <div class="header">
+            <div class="logo">✂️ Швейный HUB</div>
+            <div class="title">Квитанция о приёме</div>
+        </div>
+        
+        <div class="order-number">
+            <div class="num">№ {{ORDER_ID}}</div>
+            <div class="date">от {{DATE}}</div>
+        </div>
+        
+        <div class="divider"></div>
+        
+        <div class="section-title">👤 Клиент</div>
+        <div class="row">
+            <span class="label">Имя:</span>
+            <span class="value">{{CLIENT_NAME}}</span>
+        </div>
+        <div class="row">
+            <span class="label">Телефон:</span>
+            <span class="value">{{CLIENT_PHONE}}</span>
+        </div>
+        
+        <div class="divider"></div>
+        
+        <div class="section-title">🧵 Услуга</div>
+        <div class="service-box">
+            <div class="service-name">{{SERVICE_NAME}}</div>
+        </div>
+        
+        <div class="price-box">
+            <div class="price-label">Ориентировочная стоимость</div>
+            <div class="price-value">{{PRICE}}</div>
+        </div>
+        
+        <div class="info-box">
+            <span class="icon">📅</span>
+            <span class="text">О готовности сообщим дополнительно</span>
+        </div>
+        
+        <div class="footer">
+            <div class="footer-address">📍 г. Москва, ул. Маршала Федоренко, д. 12</div>
+            <div class="footer-phone">📞 +7 (968) 396-91-52</div>
+            <div class="footer-hours">Пн-Чт 10:00-19:50 • Пт 10:00-19:00 • Сб 10:00-17:00</div>
+            <div class="footer-note">Сохраните квитанцию для получения заказа</div>
+        </div>
+    </div>
+</body>
+</html>

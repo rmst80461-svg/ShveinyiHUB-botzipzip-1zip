@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Статистика - Швейная мастерская{% endblock %}
+
+{% block content %}
+<h2 style="margin-bottom: 20px;">📊 Общая статистика</h2>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="number">{{ stats.total_users }}</div>
+        <div class="label">👥 Пользователей</div>
+    </div>
+    <div class="stat-card">
+        <div class="number">{{ stats.total_orders }}</div>
+        <div class="label">📦 Всего заказов</div>
+    </div>
+    <div class="stat-card">
+        <div class="number">{{ stats.new_orders }}</div>
+        <div class="label">🆕 Новых</div>
+    </div>
+    <div class="stat-card">
+        <div class="number">{{ stats.in_progress }}</div>
+        <div class="label">🔄 В работе</div>
+    </div>
+    <div class="stat-card">
+        <div class="number">{{ stats.completed }}</div>
+        <div class="label">✅ Выполнено</div>
+    </div>
+    <div class="stat-card">
+        <div class="number">{{ stats.blocked_users }}</div>
+        <div class="label">🚫 Заблокировано</div>
+    </div>
+    <div class="stat-card">
+        <div class="number">{{ stats.spam_count }}</div>
+        <div class="label">🛑 Спам-атак</div>
+    </div>
+</div>
+{% endblock %}

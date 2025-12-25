@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}Отзывы - Швейная мастерская{% endblock %}
+
+{% block content %}
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="number">{{ stats.average_rating }}</div>
+        <div class="label">⭐ Средний рейтинг</div>
+    </div>
+    <div class="stat-card">
+        <div class="number">{{ stats.total }}</div>
+        <div class="label">Всего отзывов</div>
+    </div>
+    <div class="stat-card">
+        <div class="number">{{ stats.approved }}</div>
+        <div class="label">Одобрено</div>
+    </div>
+    <div class="stat-card">
+        <div class="number">{{ stats.rejected }}</div>
+        <div class="label">Отклонено</div>
+    </div>
+</div>
+
+<div class="card">
+    <h2>⭐ Распределение оценок</h2>
+    <div class="rating-bars">
+        {% for i in range(5, 0, -1) %}
+        <div style="display: flex; align-items: center; margin: 8px 0;">
+            <span style="width: 30px;">{{ i }}⭐</span>
+            <div style="flex: 1; background: #eee; height: 20px; border-radius: 10px; margin: 0 10px;">
+                <div style="width: {{ (stats.distribution[i] / stats.total * 100) if stats.total > 0 else 0 }}%; background: linear-gradient(90deg, #ffd700, #ffb700); height: 100%; border-radius: 10px;"></div>
+            </div>
+            <span style="width: 40px; text-align: right;">{{ stats.distribution[i] }}</span>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <h2>📝 Отзывы клиентов</h2>
+        <div>
+            <a href="/reviews?filter=all" class="btn {% if filter_type == 'all' %}btn-primary{% else %}btn-secondary{% endif %}" style="{% if filter_type != 'all' %}background: #ddd; color: #333;{% endif %}">Все</a>
+            <a href="/reviews?filter=approved" class="btn {% if filter_type == 'approved' %}btn-primary{% else %}btn-secondary{% endif %}" style="{% if filter_type != 'approved' %}background: #ddd; color: #333;{% endif %}">Одобренные</a>
+        </div>
+    </div>
+    
+    {% if reviews %}
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Заказ</th>
+                <th>Рейтинг</th>
+                <th>Комментарий</th>
+                <th>Статус</th>
+                <th>Дата</th>
+                <th>Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for review in reviews %}
+            <tr id="review-{{ review.id }}">
+                <td>#{{ review.id }}</td>
+                <td><a href="/orders?id={{ review.order_id }}">#{{ review.order_id }}</a></td>
+                <td>{{ "⭐" * review.rating }}</td>
+                <td>{{ review.comment[:100] if review.comment else '-' }}{% if review.comment and review.comment|length > 100 %}...{% endif %}</td>
+                <td>
+                    {% if review.is_approved %}
+                    <span class="status status-completed">Одобрен</span>
+                    {% elif review.rejected_reason %}
+                    <span class="status status-cancelled">Отклонён: {{ review.rejected_reason }}</span>
+                    {% else %}
+                    <span class="status status-new">Ожидает</span>
+                    {% endif %}
+                </td>
+                <td>{{ review.created_at.strftime('%d.%m.%Y %H:%M') if review.created_at else '-' }}</td>
+                <td>
+                    {% if not review.is_approved %}
+                    <button class="btn btn-success" onclick="moderateReview({{ review.id }}, true)">✓</button>
+                    {% endif %}
+                    {% if review.is_approved or not review.rejected_reason %}
+                    <button class="btn btn-warning" onclick="moderateReview({{ review.id }}, false, 'manual')">✗</button>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="text-align: center; color: #888; padding: 40px;">Отзывов пока нет</p>
+    {% endif %}
+</div>
+
+<script>
+async function moderateReview(reviewId, approve, reason = null) {
+    try {
+        const response = await fetch(`/api/review/${reviewId}/moderate`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ approve, reason })
+        });
+        
+        if (response.ok) {
+            location.reload();
+        } else {
+            alert('Ошибка при модерации отзыва');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Ошибка при модерации отзыва');
+    }
+}
+</script>
+{% endblock %}

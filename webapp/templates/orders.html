@@ -1,0 +1,820 @@
+{% extends "base.html" %}
+
+{% block title %}Заказы - Швейная мастерская{% endblock %}
+
+{% block content %}
+<style>
+    .controls-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+    .quick-filters {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    .quick-filters .filter-btn {
+        padding: 8px 16px;
+        border-radius: 20px;
+        border: 2px solid #e0e0e0;
+        background: white;
+        cursor: pointer;
+        font-size: 14px;
+        text-decoration: none;
+        color: #666;
+        transition: all 0.2s;
+    }
+    .quick-filters .filter-btn:hover {
+        border-color: #667eea;
+        color: #667eea;
+    }
+    .quick-filters .filter-btn.active {
+        background: #667eea;
+        border-color: #667eea;
+        color: white;
+    }
+    .quick-filters .filter-btn .count {
+        background: rgba(0,0,0,0.1);
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 12px;
+        margin-left: 4px;
+    }
+    .quick-filters .filter-btn.active .count {
+        background: rgba(255,255,255,0.3);
+    }
+    .period-filters {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        border: 1px solid #dee2e6;
+    }
+    .quick-periods {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 10px;
+    }
+    .quick-periods button {
+        padding: 6px 12px;
+        border: 1px solid #ccc;
+        background: white;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 13px;
+    }
+    .quick-periods button.active {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+    }
+    .quick-periods button:hover:not(.active) {
+        border-color: #667eea;
+        color: #667eea;
+    }
+    .custom-period {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid #dee2e6;
+    }
+    .custom-period input[type="date"] {
+        padding: 6px 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 13px;
+    }
+    .custom-period select {
+        padding: 6px 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 13px;
+    }
+    .custom-period .btn-apply {
+        padding: 6px 14px;
+        background: #667eea;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 13px;
+    }
+    .custom-period .btn-reset {
+        padding: 6px 14px;
+        background: #6c757d;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 13px;
+    }
+    .export-actions {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+    .btn-export {
+        padding: 8px 16px;
+        background: #28a745;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        text-decoration: none;
+    }
+    .btn-export:hover {
+        background: #218838;
+    }
+    .bulk-actions {
+        display: none;
+        align-items: center;
+        gap: 15px;
+        background: #fff3cd;
+        padding: 12px 20px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        border: 1px solid #ffeeba;
+    }
+    .bulk-actions.show {
+        display: flex;
+    }
+    .bulk-actions .selected-count {
+        font-weight: bold;
+        color: #856404;
+    }
+    .bulk-actions .btn-danger {
+        padding: 6px 12px;
+        background: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 13px;
+    }
+    .bulk-actions .btn-danger:hover {
+        background: #c82333;
+    }
+    .bulk-actions .btn-link {
+        padding: 6px 12px;
+        background: transparent;
+        color: #666;
+        border: none;
+        cursor: pointer;
+        font-size: 13px;
+    }
+    .status-badge {
+        display: inline-block;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    .status-new { 
+        background: #fff3cd; 
+        color: #856404; 
+        border: 1px solid #ffeeba;
+    }
+    .status-in_progress { 
+        background: #cce5ff; 
+        color: #004085;
+        border: 1px solid #b8daff;
+    }
+    .status-completed { 
+        background: #d4edda; 
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+    .status-issued {
+        background: #e2e3e5;
+        color: #383d41;
+        border: 1px solid #d6d8db;
+    }
+    .status-cancelled { 
+        background: #f8d7da; 
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+    .action-btn {
+        padding: 6px 10px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: transform 0.1s, opacity 0.2s;
+        background: transparent;
+    }
+    .action-btn:hover {
+        transform: scale(1.15);
+    }
+    .action-btn:active {
+        transform: scale(0.95);
+    }
+    .action-btn.btn-status-progress {
+        background: #e3f2fd;
+    }
+    .action-btn.btn-status-complete {
+        background: #e8f5e9;
+    }
+    .action-btn.btn-contact {
+        background: #f3e5f5;
+    }
+    .action-btn.btn-delete {
+        background: #ffebee;
+    }
+    tr:hover {
+        background: #f8f9fa;
+    }
+    .order-id {
+        font-weight: bold;
+        color: #667eea;
+    }
+    .status-dropdown {
+        position: relative;
+        display: inline-block;
+    }
+    .status-dropdown-content {
+        display: none;
+        position: absolute;
+        background: white;
+        min-width: 140px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        border-radius: 8px;
+        z-index: 100;
+        overflow: hidden;
+        left: 0;
+        top: 100%;
+        margin-top: 4px;
+    }
+    .status-dropdown-content.show {
+        display: block;
+    }
+    .status-dropdown-content button {
+        width: 100%;
+        padding: 10px 15px;
+        border: none;
+        background: white;
+        text-align: left;
+        cursor: pointer;
+        font-size: 14px;
+    }
+    .status-dropdown-content button:hover {
+        background: #f5f5f5;
+    }
+    .no-orders {
+        padding: 40px;
+        text-align: center;
+        color: #888;
+    }
+    .no-orders .icon {
+        font-size: 48px;
+        margin-bottom: 10px;
+    }
+    .order-checkbox {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+    }
+    th.checkbox-col, td.checkbox-col {
+        width: 40px;
+        text-align: center;
+    }
+    
+    /* Table wrapper for horizontal scroll on tablets */
+    .table-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Mobile card view */
+    .mobile-orders {
+        display: none;
+    }
+    .order-card {
+        background: white;
+        border: 1px solid #e0e0e0;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 12px;
+    }
+    .order-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    .order-card-body {
+        font-size: 14px;
+        color: #555;
+    }
+    .order-card-body p {
+        margin: 5px 0;
+    }
+    .order-card-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+        flex-wrap: wrap;
+    }
+    .order-card-actions .action-btn {
+        padding: 10px 14px;
+        font-size: 18px;
+    }
+    
+    /* iPad Pro / Tablet */
+    @media (max-width: 1024px) {
+        .controls-bar {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .quick-filters {
+            justify-content: flex-start;
+        }
+        .quick-filters .filter-btn {
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+        .period-filters {
+            padding: 12px;
+        }
+        .custom-period {
+            gap: 8px;
+        }
+        .custom-period span[style] {
+            margin-left: 10px !important;
+        }
+        .action-btn {
+            padding: 8px 12px;
+        }
+    }
+    
+    /* iPad / Tablet Portrait */
+    @media (max-width: 768px) {
+        .quick-filters .filter-btn {
+            padding: 6px 10px;
+            font-size: 12px;
+        }
+        .quick-filters .filter-btn .count {
+            display: none;
+        }
+        .quick-periods button {
+            padding: 8px 10px;
+            font-size: 12px;
+        }
+        .custom-period {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 10px;
+        }
+        .custom-period span[style] {
+            margin-left: 0 !important;
+            margin-top: 10px;
+        }
+        .custom-period input[type="date"],
+        .custom-period select {
+            padding: 10px;
+            font-size: 14px;
+        }
+        .custom-period .btn-apply,
+        .custom-period .btn-reset {
+            padding: 10px 16px;
+            font-size: 14px;
+        }
+        .bulk-actions {
+            flex-direction: column;
+            gap: 10px;
+            text-align: center;
+        }
+        .export-actions {
+            flex-direction: column;
+        }
+        .btn-export {
+            text-align: center;
+            padding: 12px;
+        }
+        .status-badge {
+            padding: 5px 10px;
+            font-size: 11px;
+        }
+        th, td {
+            padding: 8px 5px;
+            font-size: 12px;
+        }
+        .action-btn {
+            padding: 8px;
+            font-size: 14px;
+        }
+    }
+    
+    /* iPhone / Mobile */
+    @media (max-width: 576px) {
+        .quick-filters {
+            width: 100%;
+        }
+        .quick-filters .filter-btn {
+            flex: 1;
+            text-align: center;
+            padding: 8px 6px;
+            font-size: 11px;
+            min-width: 50px;
+        }
+        .period-filters {
+            padding: 10px;
+        }
+        .quick-periods {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+        }
+        .quick-periods button {
+            padding: 10px 6px;
+            font-size: 11px;
+            text-align: center;
+        }
+        
+        /* Switch to card view on mobile */
+        .table-wrapper {
+            display: none;
+        }
+        .mobile-orders {
+            display: block;
+        }
+        
+        .status-dropdown-content {
+            position: fixed;
+            left: 10px;
+            right: 10px;
+            top: auto;
+            bottom: 20px;
+            width: auto;
+            max-height: 50vh;
+            overflow-y: auto;
+        }
+        .status-dropdown-content button {
+            padding: 14px 20px;
+            font-size: 16px;
+        }
+        .no-orders {
+            padding: 30px 15px;
+        }
+        .no-orders .icon {
+            font-size: 36px;
+        }
+    }
+</style>
+
+<div class="card">
+    <h2>📦 Заказы</h2>
+    
+    <div class="controls-bar">
+        <div class="quick-filters">
+            <a href="/orders" class="filter-btn {% if not current_status and not period and not date_from %}active{% endif %}">
+                Все <span class="count">{{ counts.all }}</span>
+            </a>
+            <a href="/orders?status=new" class="filter-btn {% if current_status == 'new' %}active{% endif %}">
+                🆕 Новые <span class="count">{{ counts.new }}</span>
+            </a>
+            <a href="/orders?status=in_progress" class="filter-btn {% if current_status == 'in_progress' %}active{% endif %}">
+                🔄 В работе <span class="count">{{ counts.in_progress }}</span>
+            </a>
+            <a href="/orders?status=completed" class="filter-btn {% if current_status == 'completed' %}active{% endif %}">
+                ✅ Готовы <span class="count">{{ counts.completed }}</span>
+            </a>
+            <a href="/orders?status=issued" class="filter-btn {% if current_status == 'issued' %}active{% endif %}">
+                📤 Выданы <span class="count">{{ counts.issued }}</span>
+            </a>
+        </div>
+    </div>
+    
+    <div class="period-filters">
+        <div class="quick-periods">
+            <button onclick="setPeriod('')" class="{% if not period and not date_from %}active{% endif %}">Всё время</button>
+            <button onclick="setPeriod('today')" class="{% if period == 'today' %}active{% endif %}">Сегодня</button>
+            <button onclick="setPeriod('yesterday')" class="{% if period == 'yesterday' %}active{% endif %}">Вчера</button>
+            <button onclick="setPeriod('week')" class="{% if period == 'week' %}active{% endif %}">Неделя</button>
+            <button onclick="setPeriod('month')" class="{% if period == 'month' %}active{% endif %}">Месяц</button>
+        </div>
+        
+        <div class="custom-period">
+            <span>Произвольный период:</span>
+            <input type="date" id="dateFrom" value="{{ date_from or '' }}">
+            <span>—</span>
+            <input type="date" id="dateTo" value="{{ date_to or '' }}">
+            <button class="btn-apply" onclick="applyCustomPeriod()">Применить</button>
+            
+            <span style="margin-left: 20px;">Месяц/год:</span>
+            <select id="monthSelect">
+                <option value="">Все месяцы</option>
+                <option value="1" {% if month_filter == '1' %}selected{% endif %}>Январь</option>
+                <option value="2" {% if month_filter == '2' %}selected{% endif %}>Февраль</option>
+                <option value="3" {% if month_filter == '3' %}selected{% endif %}>Март</option>
+                <option value="4" {% if month_filter == '4' %}selected{% endif %}>Апрель</option>
+                <option value="5" {% if month_filter == '5' %}selected{% endif %}>Май</option>
+                <option value="6" {% if month_filter == '6' %}selected{% endif %}>Июнь</option>
+                <option value="7" {% if month_filter == '7' %}selected{% endif %}>Июль</option>
+                <option value="8" {% if month_filter == '8' %}selected{% endif %}>Август</option>
+                <option value="9" {% if month_filter == '9' %}selected{% endif %}>Сентябрь</option>
+                <option value="10" {% if month_filter == '10' %}selected{% endif %}>Октябрь</option>
+                <option value="11" {% if month_filter == '11' %}selected{% endif %}>Ноябрь</option>
+                <option value="12" {% if month_filter == '12' %}selected{% endif %}>Декабрь</option>
+            </select>
+            <select id="yearSelect">
+                {% for year in years_available %}
+                <option value="{{ year }}" {% if year_filter == year|string %}selected{% endif %}>{{ year }}</option>
+                {% endfor %}
+            </select>
+            <button class="btn-apply" onclick="applyMonthYear()">Показать</button>
+            <button class="btn-reset" onclick="resetFilters()">Сбросить</button>
+        </div>
+    </div>
+    
+    <div class="export-actions">
+        <a href="#" onclick="exportCSV(); return false;" class="btn-export">
+            📥 Скачать CSV
+        </a>
+    </div>
+    
+    <div id="bulkActions" class="bulk-actions">
+        <span class="selected-count"><span id="selectedCount">0</span> заказов выбрано</span>
+        <button class="btn-danger" onclick="deleteSelected()">🗑️ Удалить выбранные</button>
+        <button class="btn-link" onclick="clearSelection()">✖️ Снять выделение</button>
+    </div>
+    
+    {% if orders %}
+    <!-- Desktop/Tablet table view -->
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th class="checkbox-col">
+                        <input type="checkbox" id="selectAll" class="order-checkbox" onclick="toggleSelectAll()">
+                    </th>
+                    <th>#</th>
+                    <th>Услуга</th>
+                    <th>Клиент</th>
+                    <th>Телефон</th>
+                    <th>Статус</th>
+                    <th>Дата ▼</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                <tr>
+                    <td class="checkbox-col">
+                        <input type="checkbox" class="order-checkbox order-select" value="{{ order.id }}" onchange="updateBulkActions()">
+                    </td>
+                    <td><span class="order-id">{{ order.id }}</span></td>
+                    <td>{{ service_names.get(order.service_type, order.description or order.service_type or 'Услуга') }}</td>
+                    <td>{{ order.client_name or 'Не указано' }}</td>
+                    <td>{{ order.client_phone or '-' }}</td>
+                    <td>
+                        <div class="status-dropdown">
+                            <span class="status-badge status-{{ order.status }}" onclick="toggleDropdown(this)">
+                                {% if order.status == 'new' %}🆕 Новый
+                                {% elif order.status == 'in_progress' %}🔄 В работе
+                                {% elif order.status == 'completed' %}✅ Готов
+                                {% elif order.status == 'issued' %}📤 Выдан
+                                {% elif order.status == 'cancelled' %}❌ Отменён
+                                {% else %}{{ order.status }}{% endif %}
+                            </span>
+                            <div class="status-dropdown-content">
+                                <button onclick="updateStatus({{ order.id }}, 'new')">🆕 Новый</button>
+                                <button onclick="updateStatus({{ order.id }}, 'in_progress')">🔄 В работе</button>
+                                <button onclick="updateStatus({{ order.id }}, 'completed')">✅ Готов</button>
+                                <button onclick="updateStatus({{ order.id }}, 'issued')">📤 Выдан</button>
+                                <button onclick="updateStatus({{ order.id }}, 'cancelled')">❌ Отменён</button>
+                            </div>
+                        </div>
+                    </td>
+                    <td>{{ order.created_at.strftime('%d.%m.%Y %H:%M') if order.created_at else '-' }}</td>
+                    <td>
+                        <button class="action-btn btn-status-progress" onclick="updateStatus({{ order.id }}, 'in_progress')" title="В работу">🔄</button>
+                        <button class="action-btn btn-status-complete" onclick="updateStatus({{ order.id }}, 'completed')" title="Готов">✅</button>
+                        {% if order.user_id %}
+                        <a href="https://t.me/{{ order.user_id }}" target="_blank" class="action-btn btn-contact" title="Связаться">📞</a>
+                        {% endif %}
+                        <button class="action-btn btn-delete" onclick="deleteOrder({{ order.id }})" title="Удалить">🗑️</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Mobile card view -->
+    <div class="mobile-orders">
+        {% for order in orders %}
+        <div class="order-card">
+            <div class="order-card-header">
+                <span class="order-id">#{{ order.id }}</span>
+                <span class="status-badge status-{{ order.status }}" onclick="toggleDropdown(this)">
+                    {% if order.status == 'new' %}🆕 Новый
+                    {% elif order.status == 'in_progress' %}🔄 В работе
+                    {% elif order.status == 'completed' %}✅ Готов
+                    {% elif order.status == 'issued' %}📤 Выдан
+                    {% elif order.status == 'cancelled' %}❌ Отменён
+                    {% else %}{{ order.status }}{% endif %}
+                </span>
+            </div>
+            <div class="order-card-body">
+                <p><strong>{{ service_names.get(order.service_type, order.description or order.service_type or 'Услуга') }}</strong></p>
+                <p>👤 {{ order.client_name or 'Не указано' }}</p>
+                <p>📞 {{ order.client_phone or '-' }}</p>
+                <p>📅 {{ order.created_at.strftime('%d.%m.%Y %H:%M') if order.created_at else '-' }}</p>
+            </div>
+            <div class="order-card-actions">
+                <button class="action-btn btn-status-progress" onclick="updateStatus({{ order.id }}, 'in_progress')">🔄</button>
+                <button class="action-btn btn-status-complete" onclick="updateStatus({{ order.id }}, 'completed')">✅</button>
+                {% if order.user_id %}
+                <a href="https://t.me/{{ order.user_id }}" target="_blank" class="action-btn btn-contact">📞</a>
+                {% endif %}
+                <button class="action-btn btn-delete" onclick="deleteOrder({{ order.id }})">🗑️</button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="no-orders">
+        <div class="icon">📭</div>
+        <p>Заказов не найдено</p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function setPeriod(period) {
+    const url = new URL(window.location);
+    url.searchParams.delete('date_from');
+    url.searchParams.delete('date_to');
+    url.searchParams.delete('month');
+    url.searchParams.delete('year');
+    if (period) {
+        url.searchParams.set('period', period);
+    } else {
+        url.searchParams.delete('period');
+    }
+    window.location = url;
+}
+
+function applyCustomPeriod() {
+    const dateFrom = document.getElementById('dateFrom').value;
+    const dateTo = document.getElementById('dateTo').value;
+    if (!dateFrom || !dateTo) {
+        alert('Укажите обе даты');
+        return;
+    }
+    const url = new URL(window.location);
+    url.searchParams.delete('period');
+    url.searchParams.delete('month');
+    url.searchParams.delete('year');
+    url.searchParams.set('date_from', dateFrom);
+    url.searchParams.set('date_to', dateTo);
+    window.location = url;
+}
+
+function applyMonthYear() {
+    const month = document.getElementById('monthSelect').value;
+    const year = document.getElementById('yearSelect').value;
+    const url = new URL(window.location);
+    url.searchParams.delete('period');
+    url.searchParams.delete('date_from');
+    url.searchParams.delete('date_to');
+    if (month) url.searchParams.set('month', month);
+    if (year) url.searchParams.set('year', year);
+    window.location = url;
+}
+
+function resetFilters() {
+    window.location = '/orders';
+}
+
+async function updateStatus(orderId, status) {
+    try {
+        const response = await fetch(`/api/order/${orderId}/status`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({status: status})
+        });
+        if (response.ok) {
+            location.reload();
+        } else {
+            alert('Ошибка обновления статуса');
+        }
+    } catch (e) {
+        alert('Ошибка: ' + e.message);
+    }
+}
+
+
+async function deleteOrder(orderId) {
+    if (!confirm('Удалить заказ #' + orderId + '?')) return;
+    try {
+        const response = await fetch(`/api/order/${orderId}`, {
+            method: 'DELETE'
+        });
+        if (response.ok) {
+            location.reload();
+        } else {
+            alert('Ошибка удаления');
+        }
+    } catch (e) {
+        alert('Ошибка: ' + e.message);
+    }
+}
+
+function toggleDropdown(element) {
+    document.querySelectorAll('.status-dropdown-content.show').forEach(el => {
+        if (el !== element.nextElementSibling) {
+            el.classList.remove('show');
+        }
+    });
+    element.nextElementSibling.classList.toggle('show');
+}
+
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.status-dropdown')) {
+        document.querySelectorAll('.status-dropdown-content.show').forEach(el => {
+            el.classList.remove('show');
+        });
+    }
+});
+
+function toggleSelectAll() {
+    const selectAll = document.getElementById('selectAll');
+    document.querySelectorAll('.order-select').forEach(cb => {
+        cb.checked = selectAll.checked;
+    });
+    updateBulkActions();
+}
+
+function updateBulkActions() {
+    const checkboxes = document.querySelectorAll('.order-select:checked');
+    const bulkPanel = document.getElementById('bulkActions');
+    document.getElementById('selectedCount').textContent = checkboxes.length;
+    if (checkboxes.length > 0) {
+        bulkPanel.classList.add('show');
+    } else {
+        bulkPanel.classList.remove('show');
+    }
+}
+
+function clearSelection() {
+    document.getElementById('selectAll').checked = false;
+    document.querySelectorAll('.order-select').forEach(cb => {
+        cb.checked = false;
+    });
+    updateBulkActions();
+}
+
+async function deleteSelected() {
+    const selectedIds = [];
+    document.querySelectorAll('.order-select:checked').forEach(cb => {
+        selectedIds.push(parseInt(cb.value));
+    });
+    
+    if (selectedIds.length === 0) return;
+    
+    if (!confirm(`Удалить ${selectedIds.length} заказов? Это действие нельзя отменить.`)) return;
+    
+    try {
+        const response = await fetch('/api/orders/bulk-delete', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ ids: selectedIds })
+        });
+        const data = await response.json();
+        if (response.ok) {
+            alert(`Удалено ${data.deleted} заказов`);
+            location.reload();
+        } else {
+            alert('Ошибка: ' + (data.error || 'Неизвестная ошибка'));
+        }
+    } catch (e) {
+        alert('Ошибка: ' + e.message);
+    }
+}
+
+function exportCSV() {
+    const url = new URL('/api/orders/export-csv', window.location.origin);
+    const currentUrl = new URL(window.location);
+    
+    ['status', 'period', 'date_from', 'date_to', 'month', 'year'].forEach(param => {
+        if (currentUrl.searchParams.has(param)) {
+            url.searchParams.set(param, currentUrl.searchParams.get(param));
+        }
+    });
+    
+    window.location = url;
+}
+</script>
+{% endblock %}

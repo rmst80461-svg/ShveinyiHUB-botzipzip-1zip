@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Пользователи - Швейная мастерская{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>👥 Пользователи ({{ users|length }})</h2>
+    
+    {% if users %}
+    <style>
+        .order-count { 
+            display: inline-block; 
+            padding: 4px 10px; 
+            border-radius: 12px; 
+            font-weight: bold; 
+            font-size: 13px;
+            text-decoration: none;
+        }
+        .order-count-0 { background: #f0f0f0; color: #999; }
+        .order-count-low { background: #e3f2fd; color: #1976d2; }
+        .order-count-mid { background: #e8f5e9; color: #388e3c; }
+        .order-count-high { background: #fff3e0; color: #f57c00; }
+    </style>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Telegram ID</th>
+                <th>Имя</th>
+                <th>Username</th>
+                <th>Телефон</th>
+                <th>Заказов</th>
+                <th>Статус</th>
+                <th>Дата регистрации</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            {% set count = order_counts.get(user.user_id, 0) %}
+            <tr>
+                <td>{{ user.id }}</td>
+                <td>{{ user.user_id }}</td>
+                <td>{{ user.first_name or '-' }} {{ user.last_name or '' }}</td>
+                <td>{% if user.username %}@{{ user.username }}{% else %}-{% endif %}</td>
+                <td>{{ user.phone or '-' }}</td>
+                <td>
+                    {% if count == 0 %}
+                    <span class="order-count order-count-0">0</span>
+                    {% elif count <= 2 %}
+                    <a href="/orders?user_id={{ user.user_id }}" class="order-count order-count-low">{{ count }}</a>
+                    {% elif count <= 5 %}
+                    <a href="/orders?user_id={{ user.user_id }}" class="order-count order-count-mid">{{ count }} ⭐</a>
+                    {% else %}
+                    <a href="/orders?user_id={{ user.user_id }}" class="order-count order-count-high">{{ count }} 🏆</a>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if user.is_blocked %}
+                    <span class="status status-cancelled">🚫 Заблокирован</span>
+                    {% elif user.is_admin %}
+                    <span class="status status-completed">👑 Админ</span>
+                    {% else %}
+                    <span class="status status-new">✅ Активен</span>
+                    {% endif %}
+                </td>
+                <td>{{ user.created_at.strftime('%d.%m.%Y') if user.created_at else '-' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="padding: 20px; text-align: center; color: #888;">Пользователей нет</p>
+    {% endif %}
+</div>
+{% endblock %}
