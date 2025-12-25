@@ -16,19 +16,24 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Run Bot"
+args = "Run App"
 
 [[workflows.workflow]]
-name = "Run Bot"
+name = "Run App"
 author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python main.py"
+args = "python run_services.py"
+waitForPort = 5000
 
 [workflows.workflow.metadata]
-outputType = "console"
+outputType = "webview"
 
 [[ports]]
 localPort = 8080
+externalPort = 80
+
+[[ports]]
+localPort = 5000
 externalPort = 80

@@ -6,7 +6,6 @@ import signal
 import time
 import threading
 
-
 # Cleanup port 5000 if process is still running
 def cleanup_port():
     """Kill any process using port 5000"""
@@ -16,11 +15,9 @@ def cleanup_port():
     except:
         pass
 
-
 BOT_PROCESS = None
 WEB_PROCESS = None
 SHOULD_EXIT = False
-
 
 def signal_handler(sig, frame):
     global SHOULD_EXIT
@@ -31,10 +28,8 @@ def signal_handler(sig, frame):
     terminate_all()
     sys.exit(0)
 
-
 signal.signal(signal.SIGINT, signal_handler)
 signal.signal(signal.SIGTERM, signal_handler)
-
 
 def terminate_all():
     """Завершить все процессы"""
@@ -52,20 +47,24 @@ def terminate_all():
         except subprocess.TimeoutExpired:
             WEB_PROCESS.kill()
 
-
 def run_service(service_name, command, restart_delay=5):
     """Запускать сервис с автоматическим перезапуском"""
+    global BOT_PROCESS, WEB_PROCESS
     while not SHOULD_EXIT:
         try:
             print(f"\n📱 Запуск {service_name}...")
             process = subprocess.Popen(command,
                                        shell=True,
-                                       cwd=os.path.join(
-                                           os.path.dirname(__file__), '.'),
                                        stdout=subprocess.PIPE,
                                        stderr=subprocess.STDOUT,
                                        universal_newlines=True,
                                        bufsize=1)
+            
+            if "Bot" in service_name:
+                BOT_PROCESS = process
+            else:
+                WEB_PROCESS = process
+                
             print(f"✓ {service_name} запущен (PID: {process.pid})")
 
             # Ждём завершения процесса
@@ -76,13 +75,9 @@ def run_service(service_name, command, restart_delay=5):
                 ret = process.poll()
                 if ret is not None:
                     if ret == 0:
-                        print(
-                            f"⚠️ {service_name} завершился нормально (код {ret})"
-                        )
+                        print(f"⚠️ {service_name} завершился нормально (код {ret})")
                     else:
-                        print(
-                            f"⚠️ {service_name} завершился с ошибкой (код {ret})"
-                        )
+                        print(f"⚠️ {service_name} завершился с ошибкой (код {ret})")
                     break
                 time.sleep(0.1)
 
@@ -94,26 +89,22 @@ def run_service(service_name, command, restart_delay=5):
             if not SHOULD_EXIT:
                 time.sleep(restart_delay)
 
-
 if __name__ == "__main__":
     print("=" * 50)
     cleanup_port()  # Clear any existing process on port 5000
     print("🚀 ЗАПУСК ПРИЛОЖЕНИЯ ShveinyiHUB")
     print("=" * 50)
 
-    # Запускаем сервисы в отдельных потоках
-    print("\n🌐 Запуск Web Interface...")
-WEB_PROCESS = subprocess.Popen(
-            "python -m gunicorn --bind 0.0.0.0:5000 --timeout 120 --workers 2 --keep-alive 75 --chdir . webapp:app".split(),
-            cwd=os.path.join(os.path.dirname(__file__), '.', 'webapp')) 2 --keep-alive 75 --chdir . webapp:app",
-            
+    # Запускаем веб-интерфейс
+    web_command = "python -m gunicorn --bind 0.0.0.0:5000 --timeout 120 --workers 2 --keep-alive 75 webapp.app:app"
+    web_thread = threading.Thread(target=run_service, args=("Web Interface", web_command), daemon=True)
+    web_thread.start()
 
     time.sleep(2)  # Задержка перед запуском бота
 
-    print("\n📱 Запуск Telegram Bot...")
-    bot_thread = threading.Thread(target=run_service,
-                                  args=("Telegram Bot", "python main.py"),
-                                  daemon=False)
+    # Запускаем бота
+    bot_command = "python main.py"
+    bot_thread = threading.Thread(target=run_service, args=("Telegram Bot", bot_command), daemon=True)
     bot_thread.start()
 
     print("\n" + "=" * 50)
@@ -122,21 +113,13 @@ WEB_PROCESS = subprocess.Popen(
     print("📱 Telegram Bot: работает")
     print("🌐 Web Interface: http://0.0.0.0:5000")
     print(f"✓ ADMIN_ID: {os.getenv('ADMIN_ID', 'не установлен')}")
-    print("\nДля остановки нажмите Ctrl+C")
+    print("\nДля остановки используйте стандартные средства Replit")
     print("=" * 50 + "\n")
 
     # Ждём завершения
     try:
         while not SHOULD_EXIT:
             time.sleep(1)
-    except KeyboardInterrupt:
-        signal_handler(None, None)
-
-    # Ждём завершения потоков
-
-    bot_thread.join(timeout=10)
-
-    print("\n" + "=" * 50)
-    print("Приложение завершено")
-    print("=" * 50)
-    sys.exit(1)
+    except (KeyboardInterrupt, SystemExit):
+        SHOULD_EXIT = True
+        terminate_all()
