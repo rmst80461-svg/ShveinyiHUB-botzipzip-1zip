@@ -36,7 +36,7 @@ def load_admin_ids():
 
 def is_user_admin(user_id: int) -> bool:
     """Check if user is admin"""
-    load_admin_ids()
+    from config import ADMIN_IDS
     return user_id in ADMIN_IDS or is_admin(user_id)
 
 
