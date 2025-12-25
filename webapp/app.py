@@ -696,7 +696,7 @@ def unauthorized(e):
 def not_found(e):
     if request.path.startswith('/api/') or 'application/json' in request.headers.get('Accept', ''):
         return jsonify({'error': 'Not found'}), 404
-    return render_template('404.html'), 404
+    return "<h1>404 Not Found</h1><p>The requested page does not exist.</p>", 404
 
 
 @app.errorhandler(500)
@@ -704,7 +704,7 @@ def server_error(e):
     logger.exception('Server error')
     if request.path.startswith('/api/') or 'application/json' in request.headers.get('Accept', ''):
         return jsonify({'error': 'Internal server error'}), 500
-    return render_template('500.html'), 500
+    return "<h1>500 Internal Server Error</h1><p>Something went wrong on our end.</p>", 500
 
 
 # ----------------------------
